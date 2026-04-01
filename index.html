@@ -43,6 +43,7 @@ body{
     font-weight:600;
     color:#555;
     margin-bottom:12px;
+    font-size:1rem;
 }
 
 .header{
@@ -155,13 +156,20 @@ const countdown=document.getElementById("countdown");
 
 let current=new Date();
 
-/* COUNTDOWN (UPDATED TO JUNE 12) */
+/* -------- FIXED COUNTDOWN (AUTO YEAR SAFE) -------- */
 function updateCountdown(){
-    const target=new Date(new Date().getFullYear(),5,12); // June = 5
-    const now=new Date();
-    const diff=target-now;
+    const now = new Date();
 
-    if(diff<=0){
+    let target = new Date(now.getFullYear(), 5, 12); // June 12
+
+    // If date already passed → move to next year
+    if (now > target) {
+        target = new Date(now.getFullYear() + 1, 5, 12);
+    }
+
+    const diff = target - now;
+
+    if(diff <= 0){
         countdown.textContent="🎯 She’s Home ❤️";
         return;
     }
@@ -178,7 +186,7 @@ function updateCountdown(){
 setInterval(updateCountdown,1000);
 updateCountdown();
 
-/* CONFETTI FUNCTION */
+/* -------- CONFETTI -------- */
 function shootConfetti(){
     for(let i=0;i<30;i++){
         const conf=document.createElement("div");
@@ -192,7 +200,7 @@ function shootConfetti(){
     }
 }
 
-/* CALENDAR */
+/* -------- CALENDAR -------- */
 function renderCalendar(){
     calendar.innerHTML="";
 
