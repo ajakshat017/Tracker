@@ -39,8 +39,8 @@ body{
 
 .timer{
     text-align:center;
-    margin-bottom:12px;
     font-weight:600;
+    margin-bottom:12px;
 }
 
 .header{
@@ -79,11 +79,6 @@ body{
     justify-content:center;
     position:relative;
     cursor:pointer;
-}
-
-.date.disabled{
-    opacity:0.3;
-    pointer-events:none;
 }
 
 .cross-line{
@@ -136,7 +131,7 @@ const countdown=document.getElementById("countdown");
 
 let current=new Date();
 
-// FINAL TARGET DATE
+/* TARGET DATE */
 const TARGET_YEAR=2026;
 const TARGET_MONTH=5; // June
 const TARGET_DAY=12;
@@ -187,7 +182,12 @@ function renderCalendar(){
     monthYear.textContent=`${months[month]} ${year}`;
 
     const firstDay=new Date(year,month,1).getDay();
-    const daysInMonth=new Date(year,month+1,0).getDate();
+    let daysInMonth=new Date(year,month+1,0).getDate();
+
+    // 🔥 LIMIT JUNE 2026 TO 12 DAYS ONLY
+    if(year===TARGET_YEAR && month===TARGET_MONTH){
+        daysInMonth=TARGET_DAY;
+    }
 
     ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].forEach(d=>{
         const div=document.createElement("div");
@@ -205,19 +205,7 @@ function renderCalendar(){
         cell.className="date";
         cell.textContent=day;
 
-        // DISABLE DATES AFTER JUNE 12, 2026
-        if(year===TARGET_YEAR && month===TARGET_MONTH && day> TARGET_DAY){
-            cell.classList.add("disabled");
-        }
-
-        // PREVENT FUTURE NAVIGATION
-        if(year> TARGET_YEAR || (year===TARGET_YEAR && month> TARGET_MONTH)){
-            cell.classList.add("disabled");
-        }
-
         cell.onclick=()=>{
-            if(cell.classList.contains("disabled")) return;
-
             cell.classList.toggle("checked");
             shootConfetti();
         };
