@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Pui Sui Meet Timer</title>
 
 <style>
@@ -18,14 +17,14 @@
     --cross:#e63946;
 }
 
-*{box-sizing:border-box;margin:0;padding:0;font-family:Poppins,sans-serif;}
+*{box-sizing:border-box;margin:0;padding:0;font-family:Poppins;}
 
 body{
     background:var(--bg);
-    min-height:100vh;
     display:flex;
     justify-content:center;
     align-items:center;
+    min-height:100vh;
     padding:20px;
 }
 
@@ -40,10 +39,8 @@ body{
 
 .timer{
     text-align:center;
-    font-weight:600;
-    color:#555;
     margin-bottom:12px;
-    font-size:1rem;
+    font-weight:600;
 }
 
 .header{
@@ -59,10 +56,6 @@ body{
     border-radius:12px;
     padding:6px 12px;
     cursor:pointer;
-}
-
-.header h2{
-    font-size:1.4rem;
 }
 
 .calendar{
@@ -86,20 +79,16 @@ body{
     justify-content:center;
     position:relative;
     cursor:pointer;
-    font-weight:500;
 }
 
-.date svg{
-    position:absolute;
-    width:70%;
-    height:70%;
+.date.disabled{
+    opacity:0.3;
+    pointer-events:none;
 }
 
 .cross-line{
     stroke:var(--cross);
     stroke-width:5;
-    stroke-linecap:round;
-    fill:none;
     stroke-dasharray:100;
     stroke-dashoffset:100;
 }
@@ -109,26 +98,17 @@ body{
 
 @keyframes draw{to{stroke-dashoffset:0}}
 
-@media(max-width:480px){
-    .header h2{font-size:1.1rem;}
-}
-
 /* CONFETTI */
 .confetti{
     position:fixed;
     top:-10px;
     width:8px;
     height:8px;
-    opacity:0.8;
     animation:fall 2s linear forwards;
-    z-index:9999;
 }
 
 @keyframes fall{
-    to{
-        transform:translateY(100vh) rotate(720deg);
-        opacity:0;
-    }
+    to{transform:translateY(100vh) rotate(720deg);opacity:0;}
 }
 </style>
 </head>
@@ -137,7 +117,7 @@ body{
 
 <div class="calendar-container">
 
-<div class="timer" id="countdown"></div>
+<div id="countdown" class="timer"></div>
 
 <div class="header">
 <button id="prev">◀</button>
@@ -145,7 +125,7 @@ body{
 <button id="next">▶</button>
 </div>
 
-<div class="calendar" id="calendar"></div>
+<div id="calendar" class="calendar"></div>
 
 </div>
 
@@ -156,20 +136,18 @@ const countdown=document.getElementById("countdown");
 
 let current=new Date();
 
-/* -------- FIXED COUNTDOWN (AUTO YEAR SAFE) -------- */
+// FINAL TARGET DATE
+const TARGET_YEAR=2026;
+const TARGET_MONTH=5; // June
+const TARGET_DAY=12;
+
+/* COUNTDOWN */
 function updateCountdown(){
-    const now = new Date();
+    const now=new Date();
+    const target=new Date(TARGET_YEAR,TARGET_MONTH,TARGET_DAY);
+    const diff=target-now;
 
-    let target = new Date(now.getFullYear(), 5, 12); // June 12
-
-    // If date already passed → move to next year
-    if (now > target) {
-        target = new Date(now.getFullYear() + 1, 5, 12);
-    }
-
-    const diff = target - now;
-
-    if(diff <= 0){
+    if(diff<=0){
         countdown.textContent="🎯 She’s Home ❤️";
         return;
     }
@@ -186,28 +164,24 @@ function updateCountdown(){
 setInterval(updateCountdown,1000);
 updateCountdown();
 
-/* -------- CONFETTI -------- */
+/* CONFETTI */
 function shootConfetti(){
     for(let i=0;i<30;i++){
-        const conf=document.createElement("div");
-        conf.className="confetti";
-        conf.style.left=Math.random()*100+"vw";
-        conf.style.backgroundColor=
-            ["#f4acb7","#ffd6a5","#cdb4db","#bde0fe","#ffafcc"]
-            [Math.floor(Math.random()*5)];
-        document.body.appendChild(conf);
-        setTimeout(()=>conf.remove(),2000);
+        const c=document.createElement("div");
+        c.className="confetti";
+        c.style.left=Math.random()*100+"vw";
+        c.style.backgroundColor=["#f4acb7","#ffd6a5","#cdb4db","#bde0fe","#ffafcc"][Math.floor(Math.random()*5)];
+        document.body.appendChild(c);
+        setTimeout(()=>c.remove(),2000);
     }
 }
 
-/* -------- CALENDAR -------- */
+/* CALENDAR */
 function renderCalendar(){
     calendar.innerHTML="";
 
     const year=current.getFullYear();
     const month=current.getMonth();
-    const storageKey=`habit-${year}-${month}`;
-    const saved=JSON.parse(localStorage.getItem(storageKey))||{};
 
     const months=["January","February","March","April","May","June","July","August","September","October","November","December"];
     monthYear.textContent=`${months[month]} ${year}`;
@@ -231,19 +205,21 @@ function renderCalendar(){
         cell.className="date";
         cell.textContent=day;
 
-        if(saved[day]) cell.classList.add("checked");
+        // DISABLE DATES AFTER JUNE 12, 2026
+        if(year===TARGET_YEAR && month===TARGET_MONTH && day> TARGET_DAY){
+            cell.classList.add("disabled");
+        }
+
+        // PREVENT FUTURE NAVIGATION
+        if(year> TARGET_YEAR || (year===TARGET_YEAR && month> TARGET_MONTH)){
+            cell.classList.add("disabled");
+        }
 
         cell.onclick=()=>{
+            if(cell.classList.contains("disabled")) return;
+
             cell.classList.toggle("checked");
-
-            if(cell.classList.contains("checked")){
-                saved[day]=true;
-                shootConfetti();
-            }else{
-                delete saved[day];
-            }
-
-            localStorage.setItem(storageKey,JSON.stringify(saved));
+            shootConfetti();
         };
 
         const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
@@ -264,17 +240,27 @@ function renderCalendar(){
 
         svg.append(l1,l2);
         cell.appendChild(svg);
+
         calendar.appendChild(cell);
     }
 }
 
+/* NAVIGATION LIMIT */
 document.getElementById("prev").onclick=()=>{
     current.setMonth(current.getMonth()-1);
     renderCalendar();
 };
 
 document.getElementById("next").onclick=()=>{
-    current.setMonth(current.getMonth()+1);
+    const next=new Date(current);
+    next.setMonth(current.getMonth()+1);
+
+    if(next.getFullYear()>TARGET_YEAR || 
+       (next.getFullYear()===TARGET_YEAR && next.getMonth()>TARGET_MONTH)){
+        return;
+    }
+
+    current=next;
     renderCalendar();
 };
 
