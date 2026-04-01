@@ -18,12 +18,7 @@
     --cross:#e63946;
 }
 
-*{
-    box-sizing:border-box;
-    margin:0;
-    padding:0;
-    font-family:Poppins,sans-serif;
-}
+*{box-sizing:border-box;margin:0;padding:0;font-family:Poppins,sans-serif;}
 
 body{
     background:var(--bg);
@@ -160,14 +155,14 @@ const countdown=document.getElementById("countdown");
 
 let current=new Date();
 
-/* COUNTDOWN */
+/* COUNTDOWN (UPDATED TO JUNE 12) */
 function updateCountdown(){
-    const target=new Date(new Date().getFullYear(),6,31);
+    const target=new Date(new Date().getFullYear(),5,12); // June = 5
     const now=new Date();
     const diff=target-now;
 
     if(diff<=0){
-        countdown.textContent="🎯 Goal Day Reached!";
+        countdown.textContent="🎯 She’s Home ❤️";
         return;
     }
 
@@ -177,7 +172,7 @@ function updateCountdown(){
     const secs=Math.floor((diff/1000)%60);
 
     countdown.textContent=
-        `⏳ ${days} Days ${hrs} Hrs ${mins} Min ${secs} Sec left till June 12`;
+        `⏳ ${days} Days ${hrs} Hrs ${mins} Min ${secs} Sec until I hug you again ❤️`;
 }
 
 setInterval(updateCountdown,1000);
