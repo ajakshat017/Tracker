@@ -79,21 +79,23 @@ body{
     justify-content:center;
     position:relative;
     cursor:pointer;
+    transition:all 0.3s ease;
 }
 
-.cross-line{
-    stroke:var(--cross);
-    stroke-width:5;
-    stroke-dasharray:100;
-    stroke-dashoffset:100;
+/* Completed journey (past days) */
+.date.past{
+    opacity:0.4;
 }
 
-.date.checked .line1{animation:draw .4s forwards;}
-.date.checked .line2{animation:draw .4s forwards .2s;}
+/* Final day glow */
+.date.final-day{
+    background:#ffd6e0;
+    box-shadow:0 0 15px rgba(244,172,183,0.9);
+    transform:scale(1.05);
+    font-weight:600;
+}
 
-@keyframes draw{to{stroke-dashoffset:0}}
-
-/* CONFETTI */
+/* Confetti */
 .confetti{
     position:fixed;
     top:-10px;
@@ -131,7 +133,6 @@ const countdown=document.getElementById("countdown");
 
 let current=new Date();
 
-/* TARGET DATE */
 const TARGET_YEAR=2026;
 const TARGET_MONTH=5; // June
 const TARGET_DAY=12;
@@ -184,10 +185,11 @@ function renderCalendar(){
     const firstDay=new Date(year,month,1).getDay();
     let daysInMonth=new Date(year,month+1,0).getDate();
 
-    // 🔥 LIMIT JUNE 2026 TO 12 DAYS ONLY
     if(year===TARGET_YEAR && month===TARGET_MONTH){
         daysInMonth=TARGET_DAY;
     }
+
+    const today=new Date();
 
     ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].forEach(d=>{
         const div=document.createElement("div");
@@ -205,31 +207,40 @@ function renderCalendar(){
         cell.className="date";
         cell.textContent=day;
 
+        const cellDate=new Date(year,month,day);
+
+        // Past days fade
+        if(cellDate < today){
+            cell.classList.add("past");
+        }
+
+        // Final day highlight
+        if(year===TARGET_YEAR && month===TARGET_MONTH && day===TARGET_DAY){
+            cell.classList.add("final-day");
+        }
+
         cell.onclick=()=>{
+            if(cell.classList.contains("final-day")){
+                shootConfetti();
+                return;
+            }
             cell.classList.toggle("checked");
             shootConfetti();
         };
 
-        const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
-
-        const l1=document.createElementNS("http://www.w3.org/2000/svg","line");
-        l1.setAttribute("x1","10");
-        l1.setAttribute("y1","10");
-        l1.setAttribute("x2","90");
-        l1.setAttribute("y2","90");
-        l1.setAttribute("class","cross-line line1");
-
-        const l2=document.createElementNS("http://www.w3.org/2000/svg","line");
-        l2.setAttribute("x1","90");
-        l2.setAttribute("y1","10");
-        l2.setAttribute("x2","10");
-        l2.setAttribute("y2","90");
-        l2.setAttribute("class","cross-line line2");
-
-        svg.append(l1,l2);
-        cell.appendChild(svg);
-
         calendar.appendChild(cell);
+    }
+
+    // Fill remaining grid
+    const totalCells = firstDay + daysInMonth;
+    const remaining = 7 - (totalCells % 7);
+
+    if(remaining < 7){
+        for(let i=0;i<remaining;i++){
+            const empty=document.createElement("div");
+            empty.style.visibility="hidden";
+            calendar.appendChild(empty);
+        }
     }
 }
 
