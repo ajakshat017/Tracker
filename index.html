@@ -56,6 +56,7 @@ body{
     cursor:pointer;
 }
 
+/* CALENDAR */
 .calendar{
     display:grid;
     grid-template-columns:repeat(7,1fr);
@@ -76,25 +77,65 @@ body{
     align-items:center;
     justify-content:center;
     cursor:pointer;
+    position:relative;
 }
 
+/* Checked */
 .date.checked{
     background:#a8dadc;
     text-decoration:line-through;
 }
 
+/* Past */
 .date.past{
     opacity:0.4;
 }
 
+/* Today */
 .date.today{
     border:2px solid #e63946;
     background:#ffe5ec;
     font-weight:600;
 }
 
+/* Final day */
 .date.final-day{
     background:#ffd6e0;
+    box-shadow:0 0 12px rgba(244,172,183,0.8);
+}
+
+/* Birthday */
+.date.birthday{
+    background:#ffccd5;
+    box-shadow:0 0 10px rgba(255,105,135,0.6);
+    font-weight:600;
+}
+
+.date.birthday::after{
+    content:"❤️";
+    position:absolute;
+    bottom:4px;
+    font-size:12px;
+}
+
+/* Love message popup */
+.love-message{
+    position:fixed;
+    bottom:30px;
+    left:50%;
+    transform:translateX(-50%);
+    background:#f4acb7;
+    color:#fff;
+    padding:10px 18px;
+    border-radius:20px;
+    font-size:14px;
+    opacity:0;
+    transition:all 0.4s ease;
+}
+
+.love-message.show{
+    opacity:1;
+    bottom:60px;
 }
 </style>
 </head>
@@ -113,26 +154,48 @@ body{
 
 <div id="calendar" class="calendar"></div>
 
+<div id="loveMessage" class="love-message"></div>
+
 </div>
 
 <script>
 const calendar=document.getElementById("calendar");
 const countdown=document.getElementById("countdown");
 const monthYear=document.getElementById("monthYear");
+const loveMessage=document.getElementById("loveMessage");
 
 let current=new Date();
 
 const TARGET_YEAR=2026;
-const TARGET_MONTH=5; // June
+const TARGET_MONTH=5;
 const TARGET_DAY=12;
 
 /* STORAGE */
 let checkedDays = JSON.parse(localStorage.getItem("checkedDays")) || {};
 
 /* TOTAL DAYS */
-const startDate = new Date(2026, 3, 14); // April 14
+const startDate = new Date(2026, 3, 14);
 const targetDate = new Date(TARGET_YEAR, TARGET_MONTH, TARGET_DAY);
 const totalDays = Math.ceil((targetDate - startDate) / (1000*60*60*24));
+
+/* MESSAGES */
+const messages = [
+"❤️ One step closer to you",
+"🥰 Missing you more today",
+"💖 Counting days to hold you",
+"😘 You mean everything to me",
+"🌸 Can't wait to see your smile",
+"💑 Our day is getting closer",
+"💘 You are worth every wait",
+"🌹 Soon, very soon ❤️"
+];
+
+function showLoveMessage(){
+    const random = messages[Math.floor(Math.random()*messages.length)];
+    loveMessage.textContent = random;
+    loveMessage.classList.add("show");
+    setTimeout(()=>loveMessage.classList.remove("show"),2000);
+}
 
 /* COUNTDOWN */
 function updateCountdown(){
@@ -195,6 +258,11 @@ function renderCalendar(){
             cell.classList.add("today");
         }
 
+        // ❤️ Birthday (April 28)
+        if(month === 3 && day === 28){
+            cell.classList.add("birthday");
+        }
+
         if(checkedDays[key]){
             cell.classList.add("checked");
         }
@@ -210,6 +278,7 @@ function renderCalendar(){
             } else {
                 cell.classList.add("checked");
                 checkedDays[key]=true;
+                showLoveMessage();
             }
 
             localStorage.setItem("checkedDays", JSON.stringify(checkedDays));
