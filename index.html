@@ -1,285 +1,122 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+const calendar = document.getElementById("calendar");
+const monthYear = document.getElementById("monthYear");
+const countdown = document.getElementById("countdown");
 
-<title>Pui Sui Meet Timer</title>
+let current = new Date();
 
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+// Set your target total days here
+const TOTAL_DAYS_WAITING = 60; 
 
-:root{
-    --bg:#fef6f9;
-    --card:#ffffff;
-    --primary:#d8e2dc;
-    --accent:#f4acb7;
-    --text:#444;
-    --cross:#e63946;
-}
-
-*{box-sizing:border-box;margin:0;padding:0;font-family:Poppins,sans-serif;}
-
-body{
-    background:var(--bg);
-    min-height:100vh;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    padding:20px;
-}
-
-.calendar-container{
-    background:var(--card);
-    width:100%;
-    max-width:600px;
-    border-radius:22px;
-    padding:20px;
-    box-shadow:0 10px 30px rgba(0,0,0,.05);
-}
-
-.timer{
-    text-align:center;
-    font-weight:600;
-    color:#555;
-    margin-bottom:12px;
-    font-size:1rem;
-}
-
-.header{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:15px;
-}
-
-.header button{
-    background:var(--accent);
-    border:none;
-    border-radius:12px;
-    padding:6px 12px;
-    cursor:pointer;
-}
-
-.header h2{
-    font-size:1.4rem;
-}
-
-.calendar{
-    display:grid;
-    grid-template-columns:repeat(7,1fr);
-    gap:10px;
-}
-
-.day-name{
-    text-align:center;
-    font-size:.75rem;
-    color:#888;
-}
-
-.date{
-    background:var(--primary);
-    aspect-ratio:1/1;
-    border-radius:16px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    position:relative;
-    cursor:pointer;
-    font-weight:500;
-}
-
-.date svg{
-    position:absolute;
-    width:70%;
-    height:70%;
-}
-
-.cross-line{
-    stroke:var(--cross);
-    stroke-width:5;
-    stroke-linecap:round;
-    fill:none;
-    stroke-dasharray:100;
-    stroke-dashoffset:100;
-}
-
-.date.checked .line1{animation:draw .4s forwards;}
-.date.checked .line2{animation:draw .4s forwards .2s;}
-
-@keyframes draw{to{stroke-dashoffset:0}}
-
-@media(max-width:480px){
-    .header h2{font-size:1.1rem;}
-}
-
-/* CONFETTI */
-.confetti{
-    position:fixed;
-    top:-10px;
-    width:8px;
-    height:8px;
-    opacity:0.8;
-    animation:fall 2s linear forwards;
-    z-index:9999;
-}
-
-@keyframes fall{
-    to{
-        transform:translateY(100vh) rotate(720deg);
-        opacity:0;
-    }
-}
-</style>
-</head>
-
-<body>
-
-<div class="calendar-container">
-
-<div class="timer" id="countdown"></div>
-
-<div class="header">
-<button id="prev">◀</button>
-<h2 id="monthYear"></h2>
-<button id="next">▶</button>
-</div>
-
-<div class="calendar" id="calendar"></div>
-
-</div>
-
-<script>
-const calendar=document.getElementById("calendar");
-const monthYear=document.getElementById("monthYear");
-const countdown=document.getElementById("countdown");
-
-let current=new Date();
-
-/* -------- FIXED COUNTDOWN (AUTO YEAR SAFE) -------- */
-function updateCountdown(){
+/* -------- UPDATED COUNTER LOGIC -------- */
+function updateCountdown() {
     const now = new Date();
-
     let target = new Date(now.getFullYear(), 5, 12); // June 12
+    if (now > target) target = new Date(now.getFullYear() + 1, 5, 12);
 
-    // If date already passed → move to next year
-    if (now > target) {
-        target = new Date(now.getFullYear() + 1, 5, 12);
+    // 1. Calculate the TOTAL days between now and the target date
+    const diffInMs = target - now;
+    const totalRemainingPossible = Math.ceil(diffInMs / (1000 * 60 * 60 * 24));
+
+    // 2. Count how many days you have ALREADY "cut" (checked) across all months in localStorage
+    let cutDaysCount = 0;
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith('habit-')) {
+            const saved = JSON.parse(localStorage.getItem(key)) || {};
+            cutDaysCount += Object.keys(saved).length;
+        }
     }
 
-    const diff = target - now;
+    // 3. Subtract checked days from the countdown
+    const finalDaysDisplay = totalRemainingPossible - cutDaysCount;
 
-    if(diff <= 0){
-        countdown.textContent="🎯 She’s Home ❤️";
-        return;
+    if (finalDaysDisplay <= 0) {
+        countdown.textContent = "🎯 She’s Home ❤️";
+    } else {
+        // Display ONLY days
+        countdown.textContent = `⏳ ${finalDaysDisplay} Days until I hug you again ❤️`;
     }
-
-    const days=Math.floor(diff/(1000*60*60*24));
-    const hrs=Math.floor((diff/(1000*60*60))%24);
-    const mins=Math.floor((diff/(1000*60))%60);
-    const secs=Math.floor((diff/1000)%60);
-
-    countdown.textContent=
-        `⏳ ${days} Days ${hrs} Hrs ${mins} Min ${secs} Sec until I hug you again ❤️`;
 }
 
-setInterval(updateCountdown,1000);
+// REMOVED: setInterval(updateCountdown, 1000); 
+// We only call it once on load and when a click happens.
 updateCountdown();
 
 /* -------- CONFETTI -------- */
-function shootConfetti(){
-    for(let i=0;i<30;i++){
-        const conf=document.createElement("div");
-        conf.className="confetti";
-        conf.style.left=Math.random()*100+"vw";
-        conf.style.backgroundColor=
-            ["#f4acb7","#ffd6a5","#cdb4db","#bde0fe","#ffafcc"]
-            [Math.floor(Math.random()*5)];
+function shootConfetti() {
+    for (let i = 0; i < 30; i++) {
+        const conf = document.createElement("div");
+        conf.className = "confetti";
+        conf.style.left = Math.random() * 100 + "vw";
+        conf.style.backgroundColor = ["#f4acb7", "#ffd6a5", "#cdb4db", "#bde0fe", "#ffafcc"][Math.floor(Math.random() * 5)];
         document.body.appendChild(conf);
-        setTimeout(()=>conf.remove(),2000);
+        setTimeout(() => conf.remove(), 2000);
     }
 }
 
 /* -------- CALENDAR -------- */
-function renderCalendar(){
-    calendar.innerHTML="";
+function renderCalendar() {
+    calendar.innerHTML = "";
+    const year = current.getFullYear();
+    const month = current.getMonth();
+    const storageKey = `habit-${year}-${month}`;
+    const saved = JSON.parse(localStorage.getItem(storageKey)) || {};
 
-    const year=current.getFullYear();
-    const month=current.getMonth();
-    const storageKey=`habit-${year}-${month}`;
-    const saved=JSON.parse(localStorage.getItem(storageKey))||{};
+    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    monthYear.textContent = `${months[month]} ${year}`;
 
-    const months=["January","February","March","April","May","June","July","August","September","October","November","December"];
-    monthYear.textContent=`${months[month]} ${year}`;
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-    const firstDay=new Date(year,month,1).getDay();
-    const daysInMonth=new Date(year,month+1,0).getDate();
-
-    ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].forEach(d=>{
-        const div=document.createElement("div");
-        div.className="day-name";
-        div.textContent=d;
+    ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].forEach(d => {
+        const div = document.createElement("div");
+        div.className = "day-name";
+        div.textContent = d;
         calendar.appendChild(div);
     });
 
-    for(let i=0;i<firstDay;i++){
+    for (let i = 0; i < firstDay; i++) {
         calendar.appendChild(document.createElement("div"));
     }
 
-    for(let day=1;day<=daysInMonth;day++){
-        const cell=document.createElement("div");
-        cell.className="date";
-        cell.textContent=day;
+    for (let day = 1; day <= daysInMonth; day++) {
+        const cell = document.createElement("div");
+        cell.className = "date";
+        cell.textContent = day;
 
-        if(saved[day]) cell.classList.add("checked");
+        if (saved[day]) cell.classList.add("checked");
 
-        cell.onclick=()=>{
+        cell.onclick = () => {
             cell.classList.toggle("checked");
 
-            if(cell.classList.contains("checked")){
-                saved[day]=true;
+            if (cell.classList.contains("checked")) {
+                saved[day] = true;
                 shootConfetti();
-            }else{
+            } else {
                 delete saved[day];
             }
 
-            localStorage.setItem(storageKey,JSON.stringify(saved));
+            localStorage.setItem(storageKey, JSON.stringify(saved));
+            
+            // CRITICAL: Update the countdown display whenever a date is clicked
+            updateCountdown(); 
         };
 
-        const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        const l1 = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        l1.setAttribute("x1", "10"); l1.setAttribute("y1", "10"); l1.setAttribute("x2", "90"); l1.setAttribute("y2", "90");
+        l1.setAttribute("class", "cross-line line1");
+        const l2 = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        l2.setAttribute("x1", "90"); l2.setAttribute("y1", "10"); l2.setAttribute("x2", "10"); l2.setAttribute("y2", "90");
+        l2.setAttribute("class", "cross-line line2");
 
-        const l1=document.createElementNS("http://www.w3.org/2000/svg","line");
-        l1.setAttribute("x1","10");
-        l1.setAttribute("y1","10");
-        l1.setAttribute("x2","90");
-        l1.setAttribute("y2","90");
-        l1.setAttribute("class","cross-line line1");
-
-        const l2=document.createElementNS("http://www.w3.org/2000/svg","line");
-        l2.setAttribute("x1","90");
-        l2.setAttribute("y1","10");
-        l2.setAttribute("x2","10");
-        l2.setAttribute("y2","90");
-        l2.setAttribute("class","cross-line line2");
-
-        svg.append(l1,l2);
+        svg.append(l1, l2);
         cell.appendChild(svg);
         calendar.appendChild(cell);
     }
 }
 
-document.getElementById("prev").onclick=()=>{
-    current.setMonth(current.getMonth()-1);
-    renderCalendar();
-};
-
-document.getElementById("next").onclick=()=>{
-    current.setMonth(current.getMonth()+1);
-    renderCalendar();
-};
+document.getElementById("prev").onclick = () => { current.setMonth(current.getMonth() - 1); renderCalendar(); };
+document.getElementById("next").onclick = () => { current.setMonth(current.getMonth() + 1); renderCalendar(); };
 
 renderCalendar();
-</script>
-
-</body>
-</html>
