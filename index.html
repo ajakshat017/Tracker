@@ -88,12 +88,19 @@ body{
     text-decoration:line-through;
 }
 
-/* Past days faded */
+/* Past days */
 .date.past{
     opacity:0.4;
 }
 
-/* Final day glow */
+/* Today highlight */
+.date.today{
+    border:2px solid #e63946;
+    background:#ffe5ec;
+    font-weight:600;
+}
+
+/* Final day */
 .date.final-day{
     background:#ffd6e0;
     box-shadow:0 0 15px rgba(244,172,183,0.9);
@@ -161,14 +168,13 @@ function updateCountdown(){
 
     const days=Math.floor(diff/(1000*60*60*24));
 
-    countdown.textContent=
-        `⏳ ${days} Days left until I hug you again ❤️`;
+    countdown.textContent=`⏳ ${days} Days left until I hug you again ❤️`;
 }
 
 setInterval(updateCountdown,1000);
 updateCountdown();
 
-/* DAY COUNTER */
+/* DAY COUNTER (ONLY MANUAL) */
 function updateDayCounter(){
     const total = Object.keys(checkedDays).length;
     dayCounter.textContent = `✅ Days Completed: ${total}`;
@@ -204,6 +210,7 @@ function renderCalendar(){
     }
 
     const today=new Date();
+    const todayDate=new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
     ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].forEach(d=>{
         const div=document.createElement("div");
@@ -224,9 +231,14 @@ function renderCalendar(){
         const cellDate=new Date(year,month,day);
         const key = `${year}-${month}-${day}`;
 
-        // Past fade
-        if(cellDate < today){
+        // Past days
+        if(cellDate < todayDate){
             cell.classList.add("past");
+        }
+
+        // Today highlight
+        if(cellDate.getTime() === todayDate.getTime()){
+            cell.classList.add("today");
         }
 
         // Restore checked state
