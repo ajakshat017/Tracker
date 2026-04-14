@@ -1,122 +1,270 @@
-const calendar = document.getElementById("calendar");
-const monthYear = document.getElementById("monthYear");
-const countdown = document.getElementById("countdown");
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pui Sui Meet Timer</title>
 
-let current = new Date();
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
 
-// Set your target total days here
-const TOTAL_DAYS_WAITING = 60; 
-
-/* -------- UPDATED COUNTER LOGIC -------- */
-function updateCountdown() {
-    const now = new Date();
-    let target = new Date(now.getFullYear(), 5, 12); // June 12
-    if (now > target) target = new Date(now.getFullYear() + 1, 5, 12);
-
-    // 1. Calculate the TOTAL days between now and the target date
-    const diffInMs = target - now;
-    const totalRemainingPossible = Math.ceil(diffInMs / (1000 * 60 * 60 * 24));
-
-    // 2. Count how many days you have ALREADY "cut" (checked) across all months in localStorage
-    let cutDaysCount = 0;
-    for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key.startsWith('habit-')) {
-            const saved = JSON.parse(localStorage.getItem(key)) || {};
-            cutDaysCount += Object.keys(saved).length;
-        }
-    }
-
-    // 3. Subtract checked days from the countdown
-    const finalDaysDisplay = totalRemainingPossible - cutDaysCount;
-
-    if (finalDaysDisplay <= 0) {
-        countdown.textContent = "🎯 She’s Home ❤️";
-    } else {
-        // Display ONLY days
-        countdown.textContent = `⏳ ${finalDaysDisplay} Days until I hug you again ❤️`;
-    }
+:root{
+    --bg:#fef6f9;
+    --card:#ffffff;
+    --primary:#d8e2dc;
+    --accent:#f4acb7;
+    --text:#444;
+    --cross:#e63946;
 }
 
-// REMOVED: setInterval(updateCountdown, 1000); 
-// We only call it once on load and when a click happens.
+*{box-sizing:border-box;margin:0;padding:0;font-family:Poppins;}
+
+body{
+    background:var(--bg);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+    padding:20px;
+}
+
+.calendar-container{
+    background:var(--card);
+    width:100%;
+    max-width:600px;
+    border-radius:22px;
+    padding:20px;
+    box-shadow:0 10px 30px rgba(0,0,0,.05);
+}
+
+.timer{
+    text-align:center;
+    font-weight:600;
+    margin-bottom:12px;
+}
+
+.header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:15px;
+}
+
+.header button{
+    background:var(--accent);
+    border:none;
+    border-radius:12px;
+    padding:6px 12px;
+    cursor:pointer;
+}
+
+.calendar{
+    display:grid;
+    grid-template-columns:repeat(7,1fr);
+    gap:10px;
+}
+
+.day-name{
+    text-align:center;
+    font-size:.75rem;
+    color:#888;
+}
+
+.date{
+    background:var(--primary);
+    aspect-ratio:1/1;
+    border-radius:16px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    cursor:pointer;
+    transition:all 0.3s ease;
+}
+
+/* Completed journey (past days) */
+.date.past{
+    opacity:0.4;
+}
+
+/* Final day glow */
+.date.final-day{
+    background:#ffd6e0;
+    box-shadow:0 0 15px rgba(244,172,183,0.9);
+    transform:scale(1.05);
+    font-weight:600;
+}
+
+/* Confetti */
+.confetti{
+    position:fixed;
+    top:-10px;
+    width:8px;
+    height:8px;
+    animation:fall 2s linear forwards;
+}
+
+@keyframes fall{
+    to{transform:translateY(100vh) rotate(720deg);opacity:0;}
+}
+</style>
+</head>
+
+<body>
+
+<div class="calendar-container">
+
+<div id="countdown" class="timer"></div>
+
+<div class="header">
+<button id="prev">◀</button>
+<h2 id="monthYear"></h2>
+<button id="next">▶</button>
+</div>
+
+<div id="calendar" class="calendar"></div>
+
+</div>
+
+<script>
+const calendar=document.getElementById("calendar");
+const monthYear=document.getElementById("monthYear");
+const countdown=document.getElementById("countdown");
+
+let current=new Date();
+
+const TARGET_YEAR=2026;
+const TARGET_MONTH=5; // June
+const TARGET_DAY=12;
+
+/* COUNTDOWN */
+function updateCountdown(){
+    const now=new Date();
+    const target=new Date(TARGET_YEAR,TARGET_MONTH,TARGET_DAY);
+    const diff=target-now;
+
+    if(diff<=0){
+        countdown.textContent="🎯 She’s Home ❤️";
+        return;
+    }
+
+    const days=Math.floor(diff/(1000*60*60*24));
+    const hrs=Math.floor((diff/(1000*60*60))%24);
+    const mins=Math.floor((diff/(1000*60))%60);
+    const secs=Math.floor((diff/1000)%60);
+
+    countdown.textContent=
+        `⏳ ${days} Days ${hrs} Hrs ${mins} Min ${secs} Sec until I hug you again ❤️`;
+}
+
+setInterval(updateCountdown,1000);
 updateCountdown();
 
-/* -------- CONFETTI -------- */
-function shootConfetti() {
-    for (let i = 0; i < 30; i++) {
-        const conf = document.createElement("div");
-        conf.className = "confetti";
-        conf.style.left = Math.random() * 100 + "vw";
-        conf.style.backgroundColor = ["#f4acb7", "#ffd6a5", "#cdb4db", "#bde0fe", "#ffafcc"][Math.floor(Math.random() * 5)];
-        document.body.appendChild(conf);
-        setTimeout(() => conf.remove(), 2000);
+/* CONFETTI */
+function shootConfetti(){
+    for(let i=0;i<30;i++){
+        const c=document.createElement("div");
+        c.className="confetti";
+        c.style.left=Math.random()*100+"vw";
+        c.style.backgroundColor=["#f4acb7","#ffd6a5","#cdb4db","#bde0fe","#ffafcc"][Math.floor(Math.random()*5)];
+        document.body.appendChild(c);
+        setTimeout(()=>c.remove(),2000);
     }
 }
 
-/* -------- CALENDAR -------- */
-function renderCalendar() {
-    calendar.innerHTML = "";
-    const year = current.getFullYear();
-    const month = current.getMonth();
-    const storageKey = `habit-${year}-${month}`;
-    const saved = JSON.parse(localStorage.getItem(storageKey)) || {};
+/* CALENDAR */
+function renderCalendar(){
+    calendar.innerHTML="";
 
-    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-    monthYear.textContent = `${months[month]} ${year}`;
+    const year=current.getFullYear();
+    const month=current.getMonth();
 
-    const firstDay = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const months=["January","February","March","April","May","June","July","August","September","October","November","December"];
+    monthYear.textContent=`${months[month]} ${year}`;
 
-    ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].forEach(d => {
-        const div = document.createElement("div");
-        div.className = "day-name";
-        div.textContent = d;
+    const firstDay=new Date(year,month,1).getDay();
+    let daysInMonth=new Date(year,month+1,0).getDate();
+
+    if(year===TARGET_YEAR && month===TARGET_MONTH){
+        daysInMonth=TARGET_DAY;
+    }
+
+    const today=new Date();
+
+    ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].forEach(d=>{
+        const div=document.createElement("div");
+        div.className="day-name";
+        div.textContent=d;
         calendar.appendChild(div);
     });
 
-    for (let i = 0; i < firstDay; i++) {
+    for(let i=0;i<firstDay;i++){
         calendar.appendChild(document.createElement("div"));
     }
 
-    for (let day = 1; day <= daysInMonth; day++) {
-        const cell = document.createElement("div");
-        cell.className = "date";
-        cell.textContent = day;
+    for(let day=1;day<=daysInMonth;day++){
+        const cell=document.createElement("div");
+        cell.className="date";
+        cell.textContent=day;
 
-        if (saved[day]) cell.classList.add("checked");
+        const cellDate=new Date(year,month,day);
 
-        cell.onclick = () => {
-            cell.classList.toggle("checked");
+        // Past days fade
+        if(cellDate < today){
+            cell.classList.add("past");
+        }
 
-            if (cell.classList.contains("checked")) {
-                saved[day] = true;
+        // Final day highlight
+        if(year===TARGET_YEAR && month===TARGET_MONTH && day===TARGET_DAY){
+            cell.classList.add("final-day");
+        }
+
+        cell.onclick=()=>{
+            if(cell.classList.contains("final-day")){
                 shootConfetti();
-            } else {
-                delete saved[day];
+                return;
             }
-
-            localStorage.setItem(storageKey, JSON.stringify(saved));
-            
-            // CRITICAL: Update the countdown display whenever a date is clicked
-            updateCountdown(); 
+            cell.classList.toggle("checked");
+            shootConfetti();
         };
 
-        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-        const l1 = document.createElementNS("http://www.w3.org/2000/svg", "line");
-        l1.setAttribute("x1", "10"); l1.setAttribute("y1", "10"); l1.setAttribute("x2", "90"); l1.setAttribute("y2", "90");
-        l1.setAttribute("class", "cross-line line1");
-        const l2 = document.createElementNS("http://www.w3.org/2000/svg", "line");
-        l2.setAttribute("x1", "90"); l2.setAttribute("y1", "10"); l2.setAttribute("x2", "10"); l2.setAttribute("y2", "90");
-        l2.setAttribute("class", "cross-line line2");
-
-        svg.append(l1, l2);
-        cell.appendChild(svg);
         calendar.appendChild(cell);
+    }
+
+    // Fill remaining grid
+    const totalCells = firstDay + daysInMonth;
+    const remaining = 7 - (totalCells % 7);
+
+    if(remaining < 7){
+        for(let i=0;i<remaining;i++){
+            const empty=document.createElement("div");
+            empty.style.visibility="hidden";
+            calendar.appendChild(empty);
+        }
     }
 }
 
-document.getElementById("prev").onclick = () => { current.setMonth(current.getMonth() - 1); renderCalendar(); };
-document.getElementById("next").onclick = () => { current.setMonth(current.getMonth() + 1); renderCalendar(); };
+/* NAVIGATION LIMIT */
+document.getElementById("prev").onclick=()=>{
+    current.setMonth(current.getMonth()-1);
+    renderCalendar();
+};
+
+document.getElementById("next").onclick=()=>{
+    const next=new Date(current);
+    next.setMonth(current.getMonth()+1);
+
+    if(next.getFullYear()>TARGET_YEAR || 
+       (next.getFullYear()===TARGET_YEAR && next.getMonth()>TARGET_MONTH)){
+        return;
+    }
+
+    current=next;
+    renderCalendar();
+};
 
 renderCalendar();
+</script>
+
+</body>
+</html>
