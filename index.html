@@ -31,13 +31,12 @@ body{
     width:100%;
     padding:20px;
     border-radius:20px;
-    box-shadow:0 10px 30px rgba(0,0,0,.05);
 }
 
 .timer{
     text-align:center;
     font-weight:600;
-    margin-bottom:12px;
+    margin-bottom:10px;
 }
 
 .calendar{
@@ -54,7 +53,6 @@ body{
     align-items:center;
     justify-content:center;
     cursor:pointer;
-    transition:.2s;
 }
 
 .date.checked{
@@ -67,14 +65,11 @@ body{
 }
 
 .date.today{
-    border:2px solid #e63946;
-    background:#ffe5ec;
-    font-weight:600;
+    border:2px solid red;
 }
 
 .date.final-day{
     background:#ffd6e0;
-    box-shadow:0 0 12px rgba(244,172,183,0.8);
 }
 </style>
 </head>
@@ -93,7 +88,7 @@ const countdown=document.getElementById("countdown");
 let current=new Date();
 
 const TARGET_YEAR=2026;
-const TARGET_MONTH=5; // June
+const TARGET_MONTH=5;
 const TARGET_DAY=12;
 
 let counter = parseInt(localStorage.getItem("counter")) || 0;
@@ -111,9 +106,7 @@ function updateCountdown(){
     }
 
     const days=Math.floor(diff/(1000*60*60*24));
-
-    countdown.textContent=
-        `⏳ ${days} Days left ❤️ | Progress: ${counter}`;
+    countdown.textContent=`⏳ ${days} Days left ❤️ | Progress: ${counter}`;
 }
 
 setInterval(updateCountdown,1000);
@@ -127,11 +120,7 @@ function renderCalendar(){
     const month=current.getMonth();
 
     const firstDay=new Date(year,month,1).getDay();
-    let daysInMonth=new Date(year,month+1,0).getDate();
-
-    if(year===TARGET_YEAR && month===TARGET_MONTH){
-        daysInMonth=TARGET_DAY;
-    }
+    const daysInMonth=new Date(year,month+1,0).getDate();
 
     const today=new Date();
     const todayDate=new Date(today.getFullYear(), today.getMonth(), today.getDate());
@@ -148,22 +137,18 @@ function renderCalendar(){
         const cellDate=new Date(year,month,day);
         const key = `${year}-${month}-${day}`;
 
-        // Past
         if(cellDate < todayDate){
             cell.classList.add("past");
         }
 
-        // Today highlight
         if(cellDate.getTime() === todayDate.getTime()){
             cell.classList.add("today");
         }
 
-        // Restore state
         if(checkedDays[key]){
             cell.classList.add("checked");
         }
 
-        // Final day
         if(year===TARGET_YEAR && month===TARGET_MONTH && day===TARGET_DAY){
             cell.classList.add("final-day");
         }
@@ -176,40 +161,27 @@ function renderCalendar(){
                 delete checkedDays[key];
 
                 if(isPast){
-                    counter++;   // past untick → increase
+                    counter++;   // 🔥 YOUR REQUIREMENT
                 } else {
-                    counter--;   // normal untick → decrease
+                    counter--;
                 }
             } else {
                 cell.classList.add("checked");
                 checkedDays[key]=true;
 
                 if(isPast){
-                    counter--;   // past tick → decrease
+                    counter--;   // reverse logic for past
                 } else {
-                    counter++;   // normal tick → increase
+                    counter++;
                 }
             }
 
             localStorage.setItem("checkedDays", JSON.stringify(checkedDays));
             localStorage.setItem("counter", counter);
-
             updateCountdown();
         };
 
         calendar.appendChild(cell);
-    }
-
-    // Fill grid alignment
-    const totalCells = firstDay + daysInMonth;
-    const remaining = 7 - (totalCells % 7);
-
-    if(remaining < 7){
-        for(let i=0;i<remaining;i++){
-            const empty=document.createElement("div");
-            empty.style.visibility="hidden";
-            calendar.appendChild(empty);
-        }
     }
 }
 
